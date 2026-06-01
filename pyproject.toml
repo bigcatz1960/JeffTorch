@@ -1,0 +1,10 @@
+[project]
+name = "jtorch"
+version = "0.1.0"
+description = "Lightweight PyTorch-shaped neural network library"
+authors = [{name = "Jeff"}]
+requires-python = ">=3.10"
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"

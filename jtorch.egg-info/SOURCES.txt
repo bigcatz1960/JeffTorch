@@ -1,0 +1,8 @@
+README.md
+pyproject.toml
+jtorch/__init__.py
+jtorch/tensor.py
+jtorch.egg-info/PKG-INFO
+jtorch.egg-info/SOURCES.txt
+jtorch.egg-info/dependency_links.txt
+jtorch.egg-info/top_level.txt
