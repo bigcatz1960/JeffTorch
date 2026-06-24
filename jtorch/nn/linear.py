@@ -27,3 +27,28 @@ NumPy‑backed environment for understanding how neural network layers
 work internally and how higher‑level architectures are constructed from
 simple, composable components.
 """
+import numpy as np
+from jtorch.tensor import Tensor
+from jtorch.nn.parameter import Parameter
+from jtorch.nn.module import Module
+
+class Linear(Module):
+    def __init__(self, in_features, out_features):
+        super().__init__()
+
+        # Xavier-like initialization (simple version)
+        limit = 1.0 / np.sqrt(in_features)
+
+        self.weight = Parameter(
+            np.random.uniform(-limit, limit, (out_features, in_features))
+        )
+
+        self.bias = Parameter(
+            np.zeros(out_features)
+        )
+
+        self.in_features = in_features
+        self.out_features = out_features
+
+    def forward(self, x):
+        return x @ self.weight.T + self.bias

@@ -1,31 +1,81 @@
-"""
-tensor.py
-JeffTorch — Lightweight PyTorch‑shaped neural network library
+# tensor.py
+# JeffTorch — Core Tensor class
+#
+# This class wraps raw numerical data (NumPy arrays) and provides the
+# foundation for all mathematical operations in JeffTorch.
+#
+# The initial implementation is intentionally minimal:
+#   • stores data as a NumPy array
+#   • provides shape/dtype helpers
+#   • stubs out autograd fields (grad, requires_grad)
+#   • stubs out operator overloads for future math support
+#
+# As JeffTorch evolves, this class will grow to include:
+#   • arithmetic operations (add, matmul, etc.)
+#   • broadcasting rules
+#   • autograd graph construction
+#   • backward() implementation
+#   • device/dtype management
+#
+# For now, Tensor is a lightweight container that mirrors the public
+# behavior of torch.Tensor where practical, without implementing the
+# full PyTorch backend.
 
-This module defines the core Tensor class used throughout JeffTorch.
-It provides a minimal, NumPy‑backed abstraction for numerical data,
-mirroring the public behavior of torch.Tensor where practical while
-remaining small, transparent, and easy to reason about.
+import numpy as np
 
-The goals of this implementation are:
-    • clarity over performance
-    • explicit, readable mechanics
-    • a foundation for experimentation
-    • compatibility with the JeffTorch Module and functional layers
+class Tensor:
+    def __init__(self, data, requires_grad=False):
+        # Convert input to NumPy array
+        self.data = np.array(data, dtype=float)
 
-Tensor supports:
-    • basic arithmetic operations
-    • shape and dtype inspection
-    • simple broadcasting behavior
-    • gradient placeholders (for future autograd work)
-    • conversion to and from NumPy arrays
+        # Autograd fields (future use)
+        self.grad = None
+        self.requires_grad = requires_grad
+        self._backward = None     # function to compute gradients
+        self._prev = set()        # previous Tensors in the graph
 
-This file is intentionally lightweight. It exposes the essential
-building blocks needed to understand how tensor libraries work under
-the hood, without the complexity of CUDA kernels, dispatch layers,
-or a full autograd engine.
+    # ------------------------------
+    # Basic properties
+    # ------------------------------
+    @property
+    def shape(self):
+        return self.data.shape
 
-As JeffTorch evolves, this class serves as the central point where new
-ideas about tensor semantics, gradient behavior, or experimental
-features can be explored and prototyped.
-"""
+    @property
+    def dtype(self):
+        return self.data.dtype
+
+    # ------------------------------
+    # Representation
+    # ------------------------------
+    def __repr__(self):
+        return f"Tensor(shape={self.data.shape}, data={self.data})"
+
+    # ------------------------------
+    # Operator stubs (future math)
+    # ------------------------------
+    def __add__(self, other):
+        if isinstance(other, Tensor):
+            other_data = other.data
+        else:
+            # allow adding scalars
+            other_data = other
+
+        # For now, enforce identical shapes (no broadcasting yet)
+        if isinstance(other_data, np.ndarray) and other_data.shape != self.data.shape:
+            raise ValueError(f"Shape mismatch in add: {self.data.shape} vs {other_data.shape}")
+
+        return Tensor(self.data + other_data)
+
+    def __matmul__(self, other):
+        if not isinstance(other, Tensor):
+            raise TypeError("Matmul requires another Tensor")
+
+        return Tensor(self.data @ other.data)
+    
+    @property
+    def T(self):
+        return Tensor(self.data.T)
+
+    def backward(self):
+        raise NotImplementedError("Autograd not implemented yet")

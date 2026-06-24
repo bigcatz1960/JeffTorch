@@ -27,3 +27,13 @@ transparent environment for exploring neural network mechanics and
 understanding how higher‑level modules are built from simple, composable
 functional primitives.
 """
+import numpy as np
+
+def sigmoid(x):
+    return 1 / (1 + np.exp(-x))
+
+def relu(x):
+    return np.maximum(0, x)
+
+def tanh(x):
+    return np.tanh(x)

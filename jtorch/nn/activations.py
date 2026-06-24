@@ -23,3 +23,18 @@ This file is part of the JeffTorch learning framework — a minimal,
 readable environment for experimenting with neural network components
 and understanding how they work under the hood.
 """
+
+from jtorch.nn.module import Module
+import jtorch.nn.functional as F
+
+class ReLU(Module):
+    def forward(self, x):
+        return F.relu(x)
+
+class Sigmoid(Module):
+    def forward(self, x):
+        return F.sigmoid(x)
+
+class Tanh(Module):
+    def forward(self, x):
+        return F.tanh(x)
