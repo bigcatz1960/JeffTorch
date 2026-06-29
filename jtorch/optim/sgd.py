@@ -24,3 +24,5 @@ This file is part of the JeffTorch learning framework — a minimal,
 readable environment for understanding how optimizers interact with
 modules, parameters, and the training loop at a fundamental level.
 """
+for p in model.parameters():
+    p.data -= lr * p.grad

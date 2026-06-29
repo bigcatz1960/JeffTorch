@@ -44,6 +44,10 @@ class Tensor:
     @property
     def dtype(self):
         return self.data.dtype
+    
+    @property
+    def T(self):
+        return Tensor(self.data.T)
 
     # ------------------------------
     # Representation
@@ -52,30 +56,69 @@ class Tensor:
         return f"Tensor(shape={self.data.shape}, data={self.data})"
 
     # ------------------------------
-    # Operator stubs (future math)
+    # Math Operators
     # ------------------------------
     def __add__(self, other):
-        if isinstance(other, Tensor):
-            other_data = other.data
-        else:
-            # allow adding scalars
-            other_data = other
+        other = other if isinstance(other, Tensor) else Tensor(other)
 
-        # For now, enforce identical shapes (no broadcasting yet)
-        if isinstance(other_data, np.ndarray) and other_data.shape != self.data.shape:
-            raise ValueError(f"Shape mismatch in add: {self.data.shape} vs {other_data.shape}")
+        out = Tensor(self.data + other.data, requires_grad=self.requires_grad or other.requires_grad)
 
-        return Tensor(self.data + other_data)
+        out._prev = {self, other}
+
+        def _backward():
+            if self.requires_grad:
+                self.grad = self.grad + out.grad
+            if other.requires_grad:
+                other.grad = other.grad + out.grad
+
+        out._backward = _backward
+        return out
 
     def __matmul__(self, other):
-        if not isinstance(other, Tensor):
-            raise TypeError("Matmul requires another Tensor")
+        out = Tensor(self.data @ other.data, requires_grad=self.requires_grad or other.requires_grad)
 
-        return Tensor(self.data @ other.data)
+        out._prev = {self, other}
+
+        def _backward():
+            if self.requires_grad:
+                self.grad = self.grad + out.grad @ other.data.T
+            if other.requires_grad:
+                other.grad = other.grad + self.data.T @ out.grad
+
+        out._backward = _backward
+        return out
     
-    @property
-    def T(self):
-        return Tensor(self.data.T)
+    # ------------------------------
+    # Autograd engine
+    # ------------------------------
 
     def backward(self):
-        raise NotImplementedError("Autograd not implemented yet")
+        # seed gradient
+        if self.grad is None:
+            self.grad = np.ones_like(self.data)
+
+        # topological sort
+        topo = []
+        visited = set()
+
+        def build_topo(v):
+            """
+            Build a topological ordering of all Tensors that lead to `v`.
+
+            This performs a DFS over the autograd graph:
+            • visits each node exactly once
+            • ensures parents appear before children
+            • produces a list used for backward traversal
+            """
+            if v not in visited:
+                visited.add(v)
+                for parent in v._prev:
+                    build_topo(parent)
+                topo.append(v)
+
+        build_topo(self)
+
+        # go backwards
+        for node in reversed(topo):
+            if node._backward:
+                node._backward()
