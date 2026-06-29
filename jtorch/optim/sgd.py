@@ -24,5 +24,22 @@ This file is part of the JeffTorch learning framework — a minimal,
 readable environment for understanding how optimizers interact with
 modules, parameters, and the training loop at a fundamental level.
 """
-for p in model.parameters():
-    p.data -= lr * p.grad
+# sgd.py
+# JeffTorch — Minimal Stochastic Gradient Descent optimizer
+
+class SGD:
+    def __init__(self, parameters, lr=0.01):
+        self.parameters = list(parameters)
+        self.lr = lr
+
+    def step(self):
+        # Apply gradient descent update
+        for p in self.parameters:
+            if p.grad is None:
+                continue
+            p.data -= self.lr * p.grad
+
+    def zero_grad(self):
+        # Reset gradients to None
+        for p in self.parameters:
+            p.grad = None

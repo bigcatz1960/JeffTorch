@@ -21,8 +21,8 @@ from jtorch.tensor import Tensor
 
 class Parameter(Tensor):
     def __init__(self, value):
-        # Initialize the underlying Tensor
-        super().__init__(value)
+        super().__init__(value, requires_grad=True)
+        self.grad = None
 
         # Gradient placeholder
         self.grad = None
