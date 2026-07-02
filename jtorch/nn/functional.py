@@ -29,8 +29,7 @@ functional primitives.
 """
 
 import numpy as np
-from tensor import Tensor   # adjust import path if needed
-
+from jtorch.tensor import Tensor
 
 # ------------------------------
 # Activation functions
@@ -44,49 +43,47 @@ def relu(x: Tensor):
 
     def _backward():
         if x.requires_grad:
-            # derivative: 1 where x > 0, else 0
-            x.grad = x.grad + (x.data > 0) * out.grad
+            if x.grad is None:
+                x.grad = 0.0
+            x.grad += (x.data > 0) * out.grad
 
     out._backward = _backward
     return out
 
-
 def sigmoid(x: Tensor):
-    """Sigmoid activation: 1 / (1 + exp(-x))"""
     s = 1 / (1 + np.exp(-x.data))
     out = Tensor(s, requires_grad=x.requires_grad)
     out._prev = {x}
 
     def _backward():
         if x.requires_grad:
-            # derivative: s * (1 - s)
-            x.grad = x.grad + (s * (1 - s)) * out.grad
+            if x.grad is None:
+                x.grad = 0.0
+            x.grad += (s * (1 - s)) * out.grad
 
     out._backward = _backward
     return out
 
-
 def tanh(x: Tensor):
-    """Tanh activation: (e^x - e^-x) / (e^x + e^-x)"""
     t = np.tanh(x.data)
     out = Tensor(t, requires_grad=x.requires_grad)
     out._prev = {x}
 
     def _backward():
         if x.requires_grad:
-            # derivative: 1 - tanh(x)^2
-            x.grad = x.grad + (1 - t**2) * out.grad
+            if x.grad is None:
+                x.grad = 0.0
+            x.grad += (1 - t**2) * out.grad
 
     out._backward = _backward
     return out
 
-
 # ------------------------------
 # Loss functions
 # ------------------------------
-
+# Mean squared error loss: mean((pred - target)^2)
+ 
 def mse_loss(pred: Tensor, target: Tensor):
-    """Mean squared error loss: mean((pred - target)^2)"""
     diff = pred.data - target.data
     out_data = np.mean(diff ** 2)
 
@@ -94,13 +91,17 @@ def mse_loss(pred: Tensor, target: Tensor):
     out._prev = {pred, target}
 
     def _backward():
-        # d/dpred = 2*(pred - target)/N
         N = pred.data.size
+
         if pred.requires_grad:
-            pred.grad = pred.grad + (2 * diff / N) * out.grad
+            if pred.grad is None:
+                pred.grad = 0.0
+            pred.grad += (2 * diff / N) * out.grad
+
         if target.requires_grad:
-            # d/dtarget = -2*(pred - target)/N
-            target.grad = target.grad + (-2 * diff / N) * out.grad
+            if target.grad is None:
+                target.grad = 0.0
+            target.grad += (-2 * diff / N) * out.grad
 
     out._backward = _backward
     return out

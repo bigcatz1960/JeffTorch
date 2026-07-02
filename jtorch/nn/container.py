@@ -25,3 +25,21 @@ This file is part of the JeffTorch learning framework — a clear,
 readable environment for exploring neural network structure and
 experimenting with new architectural ideas.
 """
+# JeffTorch — Minimal Sequential container
+
+from jtorch.nn.module import Module
+
+class Sequential(Module):
+    def __init__(self, *modules):
+        super().__init__()
+        self._sequence = []
+
+        for idx, m in enumerate(modules):
+            # Register as a submodule so parameters() works
+            setattr(self, f"{idx}", m)
+            self._sequence.append(m)
+
+    def forward(self, x):
+        for m in self._sequence:
+            x = m(x)
+        return x

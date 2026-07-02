@@ -24,6 +24,11 @@
 import numpy as np
 
 class Tensor:
+
+    @staticmethod
+    def randn(*shape):
+        return Tensor(np.random.randn(*shape))
+
     def __init__(self, data, requires_grad=False):
         # Convert input to NumPy array
         self.data = np.array(data, dtype=float)
@@ -61,32 +66,45 @@ class Tensor:
     def __add__(self, other):
         other = other if isinstance(other, Tensor) else Tensor(other)
 
-        out = Tensor(self.data + other.data, requires_grad=self.requires_grad or other.requires_grad)
+        out = Tensor(self.data + other.data,
+                    requires_grad=self.requires_grad or other.requires_grad)
 
         out._prev = {self, other}
 
         def _backward():
             if self.requires_grad:
-                self.grad = self.grad + out.grad
+                if self.grad is None:
+                    self.grad = 0.0
+                self.grad += out.grad
+
             if other.requires_grad:
-                other.grad = other.grad + out.grad
+                if other.grad is None:
+                    other.grad = 0.0
+                other.grad += out.grad
 
         out._backward = _backward
         return out
 
     def __matmul__(self, other):
-        out = Tensor(self.data @ other.data, requires_grad=self.requires_grad or other.requires_grad)
+        out = Tensor(self.data @ other.data,
+                    requires_grad=self.requires_grad or other.requires_grad)
 
         out._prev = {self, other}
 
         def _backward():
             if self.requires_grad:
-                self.grad = self.grad + out.grad @ other.data.T
+                if self.grad is None:
+                    self.grad = 0.0
+                self.grad += out.grad @ other.data.T
+
             if other.requires_grad:
-                other.grad = other.grad + self.data.T @ out.grad
+                if other.grad is None:
+                    other.grad = 0.0
+                other.grad += self.data.T @ out.grad
 
         out._backward = _backward
         return out
+
     
     # ------------------------------
     # Autograd engine
@@ -120,5 +138,7 @@ class Tensor:
 
         # go backwards
         for node in reversed(topo):
+            if node.grad is None:
+                node.grad = 0.0
             if node._backward:
                 node._backward()
